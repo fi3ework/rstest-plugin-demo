@@ -1,1 +1,3 @@
-export const foo = 'hi'
+const bar = await import('./bar')
+
+export const foo = 'foo' + bar

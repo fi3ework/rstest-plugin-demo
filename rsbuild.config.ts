@@ -1,7 +1,11 @@
 import { Compiler } from 'webpack'
+import HarmonyImportDependency from 'webpack/lib/dependencies/HarmonyImportDependency.js'
 import { defineConfig } from '@rsbuild/core'
+import { RstestPlugin as RstestInternalPlugin } from 'webpack'
 import { webpackProvider } from '@rsbuild/webpack'
 import { pluginSwc } from '@rsbuild/plugin-webpack-swc'
+
+console.log('🧶', RstestInternalPlugin)
 
 class RstestPlugin {
   constructor() {}
@@ -19,12 +23,16 @@ class RstestPlugin {
 
       generate() {
         const compilation = this.compilation
-        console.log('👩‍🏭')
         return `
             __webpack_require__.rstest_import = async function(modPath, mod) {
-              console.log('🦶', mod)
-              const resolved = await mod;
-              return resolved
+              if (!mod) {
+                  // external module
+                  return __import(request) // injected to vm
+                } else {
+                  // bundled module
+                  const resolvedMod = await mod;
+                  return resolvedMod
+                }
             };
           `
       }
@@ -61,11 +69,33 @@ class RstestPlugin {
 export default defineConfig({
   provider: webpackProvider,
   plugins: [pluginSwc()],
+  source: {
+    entry: {
+      esmBundled: './src/esm-bundled.ts',
+      esmExternal: './src/esm-external.ts',
+      requireBundled: './src/require-bundled.ts',
+    },
+  },
+  output: {
+    minify: false,
+    filenameHash: false,
+    externals: {
+      'lodash-es/capitalize.js': 'import lodash-es/capitalize.js',
+    },
+  },
   tools: {
+    htmlPlugin: false,
     webpack: {
-      plugins: [new RstestPlugin()],
+      node: {
+        __dirname: false,
+        __filename: false,
+      },
+      plugins: [new RstestPlugin(), new RstestInternalPlugin()],
       devtool: false,
       target: 'node',
+      output: {
+        asyncChunks: false,
+      },
       experiments: {
         outputModule: true,
         topLevelAwait: true,
