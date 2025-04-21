@@ -9,6 +9,37 @@ class RstestPlugin {
   constructor() {}
 
   apply(compiler: Compiler) {
+    compiler.hooks.make.tap('plugin', (compilation) => {
+      const hooks =
+        compiler.webpack.javascript.JavascriptModulesPlugin.getCompilationHooks(
+          compilation
+        )
+
+      //       hooks.renderRequire.tap('plugin1111', (moduleSource) => {
+      //         return `// Check if module is in cache
+      // var cachedModule = __webpack_module_cache__[moduleId];
+      // if (cachedModule !== undefined) {
+      //         return cachedModule.exports;
+      // }
+      // var mockedModule = __webpack_require__.mocked?.[moduleId];
+      // if (mockedModule !== undefined) {
+      //         return mockedModule;
+      // }
+      // // Create a new module (and put it into the cache)
+      // var module = __webpack_module_cache__[moduleId] = {
+      //         // no module.id needed
+      //         // no module.loaded needed
+      //         exports: {}
+      // };
+
+      // // Execute the module function
+      // __webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+
+      // // Return the exports of the module
+      // return module.exports;`
+      //       })
+    })
+
     const { RuntimeModule } = compiler.webpack
     class RetestImportRuntimeModule extends RuntimeModule {
       constructor() {
@@ -30,10 +61,10 @@ class RstestPlugin {
             };
             __webpack_require__.rstest_register_module = async (id, modFactory, resolveMod) => {
               const mod = await modFactory();
-              if(!__webpack_require__.mocked) {
-                __webpack_require__.mocked = {}
-              }
-              __webpack_require__.mocked[id] = mod;
+              // if(!__webpack_require__.mocked) {
+              //   __webpack_require__.mocked = {}
+              // }
+              __webpack_require__.cache[id] = { exports: mod } 
               resolveMod()
             };
             __webpack_require__.with_rstest = async function(id, modFactory, resolveMod) {
@@ -43,6 +74,7 @@ class RstestPlugin {
               // __webpack_modules__[id] = mod;
               // resolveMod()
             };
+            __webpack_require__.cache = __webpack_module_cache__
           `
       }
     }
@@ -52,7 +84,9 @@ class RstestPlugin {
       compilation.hooks.additionalChunkRuntimeRequirements.tap(
         'CustomPlugin',
         (chunk, set) => {
-          compilation.addRuntimeModule(chunk, new RetestImportRuntimeModule())
+          if (chunk.name?.startsWith('runtime~')) {
+            compilation.addRuntimeModule(chunk, new RetestImportRuntimeModule())
+          }
         }
       )
     })
@@ -89,7 +123,8 @@ export default defineConfig({
       // esmBundled: './src/esm-bundled.ts',
       // esmExternal: './src/esm-external.ts',
       // requireBundled: './src/require-bundled.ts',
-      mockObj: './src/mock-obj.js',
+      // mockObj: './src/mock-obj.js',
+      mockExternal: './src/mock-external.js',
     },
   },
   output: {
