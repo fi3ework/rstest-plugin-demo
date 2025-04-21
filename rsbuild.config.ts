@@ -5,8 +5,6 @@ import { RstestPlugin as RstestInternalPlugin } from 'webpack'
 import { webpackProvider } from '@rsbuild/webpack'
 import { pluginSwc } from '@rsbuild/plugin-webpack-swc'
 
-console.log('🧶', RstestInternalPlugin)
-
 class RstestPlugin {
   constructor() {}
 
@@ -16,10 +14,6 @@ class RstestPlugin {
       constructor() {
         super('rstest runtime')
       }
-
-      // override identifier(): string {
-      //   return 'RSTEST_RUNTIME_MODULE'
-      // }
 
       generate() {
         const compilation = this.compilation
@@ -34,6 +28,21 @@ class RstestPlugin {
                   return resolvedMod
                 }
             };
+            __webpack_require__.rstest_register_module = async (id, modFactory, resolveMod) => {
+              const mod = await modFactory();
+              if(!__webpack_require__.mocked) {
+                __webpack_require__.mocked = {}
+              }
+              __webpack_require__.mocked[id] = mod;
+              resolveMod()
+            };
+            __webpack_require__.with_rstest = async function(id, modFactory, resolveMod) {
+              const mocked = __webpack_require__.mocked[id]
+              return mocked
+              // const mod = await modFactory();
+              // __webpack_modules__[id] = mod;
+              // resolveMod()
+            };
           `
       }
     }
@@ -43,26 +52,32 @@ class RstestPlugin {
       compilation.hooks.additionalChunkRuntimeRequirements.tap(
         'CustomPlugin',
         (chunk, set) => {
-          console.log('😩', chunk.name)
           compilation.addRuntimeModule(chunk, new RetestImportRuntimeModule())
         }
       )
     })
 
-    // compiler.hooks.thisCompilation.tap('RepackTargetPlugin', (compilation) => {
-    //   const { RuntimeGlobals } = compiler.webpack;
+    // compiler.hooks.compilation.tap('RepackTargetPlugin', (compilation) => {
+    //   const { RuntimeGlobals } = compiler.webpack
     //   compilation.hooks.runtimeModule.tap(
     //     'RepackTargetPlugin',
     //     (module, chunk) => {
-    //       console.log('👩‍🎨', module.name);
-    //       const originSource = module.source?.source.toString('utf-8');
-    //       module.source!.source = Buffer.from(
-    //         `${originSource}/* QQQ */`,
-    //         'utf-8',
-    //       );
-    //     },
-    //   );
-    // });
+    //       if (module.name === 'rstest runtime') {
+    //         module.source.source = Buffer.from(
+    //           `  "/override/public/path";\n`,
+    //           'utf-8'
+    //         )
+    //         console.log('👩‍🎨1111', module.name, chunk.name)
+    //       }
+    //       // const originSource = module.source?.source?.toString?.('utf-8')
+    //       // console.log('👨‍👩‍👦‍👦', originSource)
+    //       // module.source!.source = Buffer.from(
+    //       //   `${originSource}/* QQQ */`,
+    //       //   'utf-8'
+    //       // )
+    //     }
+    //   )
+    // })
   }
 }
 
@@ -71,9 +86,10 @@ export default defineConfig({
   plugins: [pluginSwc()],
   source: {
     entry: {
-      esmBundled: './src/esm-bundled.ts',
-      esmExternal: './src/esm-external.ts',
-      requireBundled: './src/require-bundled.ts',
+      // esmBundled: './src/esm-bundled.ts',
+      // esmExternal: './src/esm-external.ts',
+      // requireBundled: './src/require-bundled.ts',
+      mockObj: './src/mock-obj.js',
     },
   },
   output: {
