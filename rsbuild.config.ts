@@ -1,5 +1,4 @@
-import { Compiler } from 'webpack'
-import HarmonyImportDependency from 'webpack/lib/dependencies/HarmonyImportDependency.js'
+import { Compiler, BannerPlugin } from 'webpack'
 import { defineConfig } from '@rsbuild/core'
 import { RstestPlugin as RstestInternalPlugin } from 'webpack'
 import { webpackProvider } from '@rsbuild/webpack'
@@ -70,10 +69,10 @@ class RstestPlugin {
               const mocked = __webpack_require__.mocked[id]
               return mocked
             };
-            __webpack_require__.rstest_require = function(moduleId) {
-              // TODO: here use vm injected import function
-              return import(moduleId);
-            };
+            // __webpack_require__.rstest_import = function(moduleId) {
+            //   // TODO: here use vm injected import function
+            //   return import(moduleId);
+            // };
           `
       }
     }
@@ -124,32 +123,80 @@ export default defineConfig({
   },
   source: {
     entry: {
+      index: './src/index.js',
+      indexCjs: './src/index-cjs.js',
       // esmBundled: './src/esm-bundled.ts',
       // esmExternal: './src/esm-external.ts',
       // requireBundled: './src/require-bundled.ts',
       // mockObj: './src/mock-obj.js',
-      mockExternal: './src/mock-external.js',
+      // mockExternal: './src/mock-external.js',
       // mockImportActual: './src/mock-import-actual.js',
     },
   },
   output: {
     minify: false,
     filenameHash: false,
-    externals: {
-      'lodash-es/capitalize.js': 'import lodash-es/capitalize.js',
-    },
+    externals: [
+      ({ request, dependencyType, contextInfo }: any, callback: any) => {
+        let shouldWarn = false
+        const _callback = (_matched: boolean, _shouldWarn?: boolean) => {
+          if (_shouldWarn) {
+            shouldWarn = true
+          }
+        }
+
+        if (
+          request === 'lodash-es/capitalize.js' ||
+          request === 'radashi' ||
+          request === 'ok'
+        ) {
+          if (contextInfo.issuer && dependencyType === 'commonjs') {
+            return callback(undefined, 'commonjs ' + request)
+          } else {
+            return callback(undefined, 'import ' + request)
+          }
+        }
+        callback()
+      },
+      // {
+      //   'lodash-es/capitalize.js': 'import lodash-es/capitalize.js',
+      //   radashi: 'import radashi',
+      //   ok: 'import ok',
+      // },
+    ],
   },
   tools: {
+    bundlerChain: (config, { CHAIN_ID }) => {
+      // add ./loader.js loader
+      config.module
+        .rule(`Rslib:${CHAIN_ID.RULE.JS}-entry-loader`)
+        .test(config.module.rule(CHAIN_ID.RULE.JS).get('test'))
+        .issuer(/^$/)
+        .use('RETEST_LOADER_NAME')
+        .loader(require.resolve('../loader.js'))
+    },
     htmlPlugin: false,
     webpack: {
       node: {
         __dirname: false,
         __filename: false,
       },
-      plugins: [new RstestPlugin(), new RstestInternalPlugin()],
+      plugins: [
+        new RstestPlugin(),
+        new RstestInternalPlugin(),
+        new BannerPlugin({
+          banner: `// \`__import\` should be inject from vm outside.
+const __import = (request) => { return import(request); }
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+`,
+          raw: true,
+        }),
+      ],
       devtool: false,
       target: 'node',
       output: {
+        importFunctionName: '__import',
         asyncChunks: false,
         chunkLoading: 'import',
       },
@@ -158,7 +205,9 @@ export default defineConfig({
         topLevelAwait: true,
       },
       optimization: {
-        splitChunks: false,
+        splitChunks: {
+          chunks: 'all',
+        },
         concatenateModules: false,
         moduleIds: 'named',
         chunkIds: 'named',
