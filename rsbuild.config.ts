@@ -47,7 +47,6 @@ class RstestPlugin {
       }
 
       generate() {
-        const compilation = this.compilation
         return `
             __webpack_require__.rstest_import = async function(modPath, mod) {
               if (!mod) {
@@ -61,14 +60,13 @@ class RstestPlugin {
             };
             __webpack_require__.rstest_register_module = async (id, modFactory, resolveMod) => {
               const mod = await modFactory();
-              __webpack_require__.cache[id] = { exports: mod } 
+              __webpack_require__.c[id] = { exports: mod } 
               resolveMod()
             };
             __webpack_require__.with_rstest = async function(id, modFactory, resolveMod) {
               const mocked = __webpack_require__.mocked[id]
               return mocked
             };
-            __webpack_require__.cache = __webpack_module_cache__
           `
       }
     }
@@ -112,6 +110,11 @@ class RstestPlugin {
 export default defineConfig({
   provider: webpackProvider,
   plugins: [pluginSwc()],
+  resolve: {
+    alias: {
+      '@r': 'radashi',
+    },
+  },
   source: {
     entry: {
       // esmBundled: './src/esm-bundled.ts',

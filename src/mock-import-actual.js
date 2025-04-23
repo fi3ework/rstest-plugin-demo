@@ -14,7 +14,7 @@ const mockPromise = new Promise((_resolve) => {
 })
 
 __webpack_require__.rstest_register_module(
-  require.resolve('lodash-es/capitalize.js'),
+  require.resolveWeak('lodash-es/capitalize.js'),
   async () => {
     // const originalModule = await importActual('lodash-es/capitalize.js')
     const originalModule = await import('lodash-es/capitalize.js')
@@ -30,8 +30,6 @@ await mockPromise
 
 const cap = await import('lodash-es/capitalize.js')
 
-// const foo = await import('./use-lodash.js')
-//
 console.log('🟢', cap('ok'))
 // === after loader ===
 
