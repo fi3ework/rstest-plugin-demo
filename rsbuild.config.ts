@@ -61,18 +61,12 @@ class RstestPlugin {
             };
             __webpack_require__.rstest_register_module = async (id, modFactory, resolveMod) => {
               const mod = await modFactory();
-              // if(!__webpack_require__.mocked) {
-              //   __webpack_require__.mocked = {}
-              // }
               __webpack_require__.cache[id] = { exports: mod } 
               resolveMod()
             };
             __webpack_require__.with_rstest = async function(id, modFactory, resolveMod) {
               const mocked = __webpack_require__.mocked[id]
               return mocked
-              // const mod = await modFactory();
-              // __webpack_modules__[id] = mod;
-              // resolveMod()
             };
             __webpack_require__.cache = __webpack_module_cache__
           `
@@ -124,7 +118,8 @@ export default defineConfig({
       // esmExternal: './src/esm-external.ts',
       // requireBundled: './src/require-bundled.ts',
       // mockObj: './src/mock-obj.js',
-      mockExternal: './src/mock-external.js',
+      // mockExternal: './src/mock-external.js',
+      mockImportActual: './src/mock-import-actual.js',
     },
   },
   output: {
