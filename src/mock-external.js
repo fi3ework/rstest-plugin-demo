@@ -8,6 +8,7 @@
 // === before loader ===
 
 // === after loader ===
+
 let resolveMock = undefined
 const mockPromise = new Promise((_resolve) => {
   resolveMock = _resolve
@@ -18,6 +19,7 @@ __webpack_require__.rstest_register_module(
   async () => {
     const originalModule = await import('lodash-es/capitalize.js')
     const __output = originalModule.default
+    console.log('👨‍👩‍👧‍👦', __output)
     return __output
   },
   resolveMock
@@ -25,9 +27,8 @@ __webpack_require__.rstest_register_module(
 
 await mockPromise
 
-const foo = await import('./use-lodash.js')
-
+const foo = await import('lodash')
 console.log('🟢', foo.default('ok'))
-// === after loader ===
+// // === after loader ===
 
 export {}
