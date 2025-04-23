@@ -14,7 +14,7 @@ const mockPromise = new Promise((_resolve) => {
 })
 
 __webpack_require__.rstest_register_module(
-  './example.js?mocked',
+  require.resolve('./example.js'),
   async () => {
     const originalModule = await import('./example.js')
     const __output = { ...originalModule.default, b: 2 }
@@ -25,7 +25,7 @@ __webpack_require__.rstest_register_module(
 
 await mockPromise
 
-const foo = await __webpack_require__.with_rstest('./example.js?mocked')
+const foo = await import('./example.js')
 
 console.log('🟢', foo)
 // === after loader ===
