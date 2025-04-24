@@ -1,29 +1,7 @@
-# Rsbuild project
-
-## Setup
-
-Install the dependencies:
-
 ```bash
-pnpm install
+pnpm i
+pnpm run build
+node dist/static/js/indexCjs.js
 ```
 
-## Get started
-
-Start the dev server:
-
-```bash
-pnpm dev
-```
-
-Build the app for production:
-
-```bash
-pnpm build
-```
-
-Preview the production build locally:
-
-```bash
-pnpm preview
-```
+link webpack from https://github.com/fi3ework/webpack/commit/363cf7481ddf079a00e52d41d01d058e5aa8141a.

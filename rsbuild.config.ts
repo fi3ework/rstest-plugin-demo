@@ -61,9 +61,16 @@ class RstestPlugin {
               __webpack_require__.c = __webpack_module_cache__;
             }
             __webpack_require__.rstest_register_module = async (id, modFactory, resolveMod) => {
-              const mod = await modFactory();
-              __webpack_require__.c[id] = { exports: mod } 
-              resolveMod()
+              if (resolveMod) {
+                // ESM await
+                const mod = await modFactory();
+                __webpack_require__.c[id] = { exports: mod } 
+                resolveMod()
+              } else {
+               // cjs
+                const mod = modFactory();
+                __webpack_require__.c[id] = { exports: mod }
+              } 
             };
             __webpack_require__.with_rstest = async function(id, modFactory, resolveMod) {
               const mocked = __webpack_require__.mocked[id]
@@ -99,7 +106,6 @@ class RstestPlugin {
     //           `  "/override/public/path";\n`,
     //           'utf-8'
     //         )
-    //         console.log('👩‍🎨1111', module.name, chunk.name)
     //       }
     //       // const originSource = module.source?.source?.toString?.('utf-8')
     //       // console.log('👨‍👩‍👦‍👦', originSource)
@@ -118,19 +124,13 @@ export default defineConfig({
   plugins: [pluginSwc()],
   resolve: {
     alias: {
-      '@r': 'radashi',
+      '@shared/pad': 'lodash-es/pad.js',
     },
   },
   source: {
     entry: {
       index: './src/index.js',
-      indexCjs: './src/index-cjs.js',
-      // esmBundled: './src/esm-bundled.ts',
-      // esmExternal: './src/esm-external.ts',
-      // requireBundled: './src/require-bundled.ts',
-      // mockObj: './src/mock-obj.js',
-      // mockExternal: './src/mock-external.js',
-      // mockImportActual: './src/mock-import-actual.js',
+      // indexCjs: './src/index-cjs.js',
     },
   },
   output: {
@@ -148,7 +148,7 @@ export default defineConfig({
         if (
           request === 'lodash-es/capitalize.js' ||
           request === 'radashi' ||
-          request === 'ok'
+          request === 'pkg1'
         ) {
           if (contextInfo.issuer && dependencyType === 'commonjs') {
             return callback(undefined, 'commonjs ' + request)
@@ -158,23 +158,9 @@ export default defineConfig({
         }
         callback()
       },
-      // {
-      //   'lodash-es/capitalize.js': 'import lodash-es/capitalize.js',
-      //   radashi: 'import radashi',
-      //   ok: 'import ok',
-      // },
     ],
   },
   tools: {
-    bundlerChain: (config, { CHAIN_ID }) => {
-      // add ./loader.js loader
-      config.module
-        .rule(`Rslib:${CHAIN_ID.RULE.JS}-entry-loader`)
-        .test(config.module.rule(CHAIN_ID.RULE.JS).get('test'))
-        .issuer(/^$/)
-        .use('RETEST_LOADER_NAME')
-        .loader(require.resolve('../loader.js'))
-    },
     htmlPlugin: false,
     webpack: {
       node: {
@@ -186,8 +172,12 @@ export default defineConfig({
         new RstestInternalPlugin(),
         new BannerPlugin({
           banner: `// \`__import\` should be inject from vm outside.
-const __import = (request) => { return import(request); }
+const __import = (request) => {
+  console.log('🟡 ESM import: ', request);
+  return import(request);
+}
 import { createRequire } from 'node:module';
+// \`require\` should be inject from vm outside.
 const require = createRequire(import.meta.url);
 `,
           raw: true,
