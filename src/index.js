@@ -14,22 +14,15 @@
 // #endregion
 
 // #region after loader:
-let resolveMock = undefined
-const mockPromise = new Promise((_resolve) => {
-  resolveMock = _resolve
-})
-
-__webpack_require__.rstest_register_module(
+await __webpack_require__.rstest_register_module(
   require.resolve('./minus.js'),
   async () => {
     const __output = {
       minus: (a) => a - 0.1,
     }
     return __output
-  },
-  resolveMock
+  }
 )
-await mockPromise
 // #endregion
 
 // ==========================================================================================
@@ -47,39 +40,64 @@ await mockPromise
 // #endregion
 
 // #region after loader:
-let resolveMock2 = undefined
-const mockPromise2 = new Promise((_resolve) => {
-  resolveMock2 = _resolve
+await __webpack_require__.rstest_register_module('pkg1', async () => {
+  const originalModule = await import('radashi')
+  const __output = originalModule.title
+  return __output
 })
-
-__webpack_require__.rstest_register_module(
-  'pkg1',
-  async () => {
-    const originalModule = await import('radashi')
-    const __output = originalModule.title
-    return __output
-  },
-  resolveMock2
-)
-
-await mockPromise2
 // #endregion
 
 // #region after loader:
-let resolveMock3 = undefined
-const mockPromise3 = new Promise((_resolve) => {
-  resolveMock3 = _resolve
-})
 
-__webpack_require__.rstest_register_module(
+await __webpack_require__.rstest_register_module(
   require.resolve('@shared/pad'),
   async () => {
     return (str) => `ppp${str}qqq`
-  },
-  resolveMock3
+  }
 )
+// #endregion
 
-await mockPromise3
+// ============================================================================================
+
+// #region before loader:
+// rstest.mock(
+//   'pkg1',
+//   async () => {
+//     const originalModule = await import('radashi')
+//     const __output = originalModule.title
+//     return __output
+//   },
+//   resolveMock
+// )
+// #endregion
+
+let non_exist_path = (() => {
+  let p = undefined
+  // let resolved = undefined
+  try {
+    p = require.resolve('non_exist')
+    // resolved = true
+  } catch (e) {
+    p = 'non_exist'
+    // resolved = false
+  }
+  return p
+})()
+
+// #region after loader:
+await __webpack_require__.rstest_register_module(non_exist_path, async () => {
+  return { foo: 'fooooo' }
+})
+// #endregion
+
+// #region after loader:
+
+await __webpack_require__.rstest_register_module(
+  require.resolve('@shared/pad'),
+  async () => {
+    return (str) => `ppp${str}qqq`
+  }
+)
 // #endregion
 
 // ESM
@@ -89,10 +107,18 @@ const title = await import('pkg1')
 const titleWithSuffix = await import('./use-external.js')
 const pad = await import('@shared/pad')
 
+let nonExist = undefined
+try {
+  nonExist = await import('non_exist')
+} catch (e) {
+  nonExist = __webpack_require__('non_exist')
+}
+
 console.log('🟢', minus(2))
 console.log('🟢', title('hello world.'))
 console.log('🟢', titleWithSuffix.default('hello world.'))
 console.log('🟢', pad('[TO_PAD]'))
+console.log('🟢', nonExist)
 
 // __dirname __filename
 const { filename } = await import('./use-dir')

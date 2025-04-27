@@ -47,39 +47,21 @@ class RstestPlugin {
 
       generate() {
         return `
-            // __webpack_require__.rstest_import = async function(modPath, mod) {
-            //   if (!mod) {
-            //       // external module
-            //       return __import(request) // injected to vm
-            //     } else {
-            //       // bundled module
-            //       const resolvedMod = await mod;
-            //       return resolvedMod
-            //     }
-            // };
             if (typeof __webpack_module_cache__ !== 'undefined') {
               __webpack_require__.c = __webpack_module_cache__;
             }
             __webpack_require__.rstest_register_module = async (id, modFactory, resolveMod) => {
-              if (resolveMod) {
-                // ESM await
-                const mod = await modFactory();
-                __webpack_require__.c[id] = { exports: mod } 
-                resolveMod()
-              } else {
-               // cjs
-                const mod = modFactory();
-                __webpack_require__.c[id] = { exports: mod }
-              } 
+              let _resolve = undefined
+              
+              const innerPromise = new Promise((resolve, reject) => {
+                _resolve = resolve
+                })
+
+              const mod = await modFactory();
+              __webpack_require__.c[id] = { exports: mod } 
+              _resolve()
+              return innerPromise
             };
-            __webpack_require__.with_rstest = async function(id, modFactory, resolveMod) {
-              const mocked = __webpack_require__.mocked[id]
-              return mocked
-            };
-            // __webpack_require__.rstest_import = function(moduleId) {
-            //   // TODO: here use vm injected import function
-            //   return import(moduleId);
-            // };
           `
       }
     }
