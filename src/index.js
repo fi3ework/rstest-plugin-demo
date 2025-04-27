@@ -100,6 +100,8 @@ await __webpack_require__.rstest_register_module(
 )
 // #endregion
 
+// #region after loader:
+
 // ESM
 
 const { minus } = await import('./minus.js')
