@@ -51,6 +51,14 @@ __webpack_require__.set_mock('pkg2', () => {
   return __output
 })
 
+__webpack_require__.set_mock(require.resolveWeak('lodash-es/repeat.js'), () => {
+  const repeat = require('lodash-es/repeat.js')
+  return (str) => repeat.default(str, 2) + ' --- my-repeat'
+})
+
+const repeat = require('lodash-es/repeat.js')
+console.log('🟢', repeat('abc'))
+
 // CJS
 const { minus } = require('./minus.js')
 const title = require('pkg1')

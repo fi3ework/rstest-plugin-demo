@@ -77,12 +77,12 @@ __webpack_require__.set_mock('non_exist', async () => {
 
 // #region after loader:
 
-await __webpack_require__.rstest_register_module(
-  require.resolve('@shared/pad'),
-  async () => {
-    return (str) => `ppp${str}qqq`
-  }
-)
+// await __webpack_require__.rstest_register_module(
+//   require.resolve('@shared/pad'),
+//   async () => {
+//     return (str) => `ppp${str}qqq`
+//   }
+// )
 // #endregion
 
 // #region after loader:
@@ -92,9 +92,19 @@ await __webpack_require__.rstest_register_module(
 // ESM
 
 const { minus } = await import('./minus.js')
-const title = await import('pkg1')
-const titleWithSuffix = await import('./use-external.js')
 const pad = await import('@shared/pad')
+
+__webpack_require__.set_mock(
+  require.resolveWeak('lodash-es/repeat.js'),
+  async () => {
+    const repeat = await import('lodash-es/repeat.js', {
+      with: { actual: true },
+    })
+    return (str) => repeat.default(str, 2) + ' --- my-repeat'
+  }
+)
+const repeat = await import('lodash-es/repeat.js')
+console.log('🟢', repeat('abc'))
 
 function unMock(id) {
   delete __webpack_require__.mock_modules[id]
@@ -107,7 +117,9 @@ console.log('🟢', minus(2))
 const { minus: minusOriginal } = await import('./minus.js')
 console.log('🟢', minusOriginal(2))
 
+const title = await import('pkg1')
 console.log('🟢', title('hello world.'))
+const titleWithSuffix = await import('./use-external.js')
 console.log('🟢', titleWithSuffix.default('hello world.'))
 console.log('🟢', pad('[TO_PAD]'))
 // console.log('🟢', nonExist)

@@ -50,21 +50,10 @@ class RstestPlugin {
             if (typeof __webpack_module_cache__ !== 'undefined') {
               __webpack_require__.c = __webpack_module_cache__;
             }
-            // __webpack_require__.rstest_register_module = async (id, modFactory, resolveMod) => {
-            //   let _resolve = undefined
-              
-            //   const innerPromise = new Promise((resolve, reject) => {
-            //     _resolve = resolve
-            //     })
-
-            //   const mod = await modFactory();
-            //   __webpack_require__.c[id] = { exports: mod } 
-            //   _resolve()
-            //   return innerPromise
-            // };
             __webpack_require__.mock_modules = {};
             __webpack_require__.set_mock = (id, modFactory) => {
-              __webpack_require__.mock_modules[id] = modFactory;
+              modFactory.qqq = id
+              __webpack_require__.mock_modules[id] = modFactory
             };
             __webpack_require__.get_mock = (id) => {
               let currentMock = __webpack_require__.mock_modules[id];
@@ -75,7 +64,16 @@ class RstestPlugin {
             __webpack_require__.rstest_require = (...args) => {
               let currentMock = __webpack_require__.mock_modules[args[0]];
               if (currentMock) {
-                return currentMock();
+                const bypassedId = currentMock.qqq
+                const raw = __webpack_require__.mock_modules[bypassedId]
+                if(raw) {
+                  delete __webpack_require__.mock_modules[bypassedId]
+                }
+                const res = currentMock();
+                if(raw) {
+                  __webpack_require__.mock_modules[bypassedId] = raw
+                }
+                return res;
               }
               return __webpack_require__(...args)
             };
@@ -94,27 +92,6 @@ class RstestPlugin {
         }
       )
     })
-
-    // compiler.hooks.compilation.tap('RepackTargetPlugin', (compilation) => {
-    //   const { RuntimeGlobals } = compiler.webpack
-    //   compilation.hooks.runtimeModule.tap(
-    //     'RepackTargetPlugin',
-    //     (module, chunk) => {
-    //       if (module.name === 'rstest runtime') {
-    //         module.source.source = Buffer.from(
-    //           `  "/override/public/path";\n`,
-    //           'utf-8'
-    //         )
-    //       }
-    //       // const originSource = module.source?.source?.toString?.('utf-8')
-    //       // console.log('👨‍👩‍👦‍👦', originSource)
-    //       // module.source!.source = Buffer.from(
-    //       //   `${originSource}/* QQQ */`,
-    //       //   'utf-8'
-    //       // )
-    //     }
-    //   )
-    // })
   }
 }
 
