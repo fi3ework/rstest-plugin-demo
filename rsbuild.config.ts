@@ -62,6 +62,16 @@ class RstestPlugin {
               _resolve()
               return innerPromise
             };
+            __webpack_require__.mock_modules = {};
+            __webpack_require__.set_mock = (id, modFactory) => {
+              __webpack_require__.mock_modules[id] = modFactory;
+            };
+            __webpack_require__.get_mock = (id, modFactory, resolveMod) => {
+              let currentMock = __webpack_require__.mock_modules[id];
+              if (currentMock) {
+                return currentMock;
+              }
+            };
           `
       }
     }
