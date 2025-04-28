@@ -50,27 +50,34 @@ class RstestPlugin {
             if (typeof __webpack_module_cache__ !== 'undefined') {
               __webpack_require__.c = __webpack_module_cache__;
             }
-            __webpack_require__.rstest_register_module = async (id, modFactory, resolveMod) => {
-              let _resolve = undefined
+            // __webpack_require__.rstest_register_module = async (id, modFactory, resolveMod) => {
+            //   let _resolve = undefined
               
-              const innerPromise = new Promise((resolve, reject) => {
-                _resolve = resolve
-                })
+            //   const innerPromise = new Promise((resolve, reject) => {
+            //     _resolve = resolve
+            //     })
 
-              const mod = await modFactory();
-              __webpack_require__.c[id] = { exports: mod } 
-              _resolve()
-              return innerPromise
-            };
+            //   const mod = await modFactory();
+            //   __webpack_require__.c[id] = { exports: mod } 
+            //   _resolve()
+            //   return innerPromise
+            // };
             __webpack_require__.mock_modules = {};
             __webpack_require__.set_mock = (id, modFactory) => {
               __webpack_require__.mock_modules[id] = modFactory;
             };
-            __webpack_require__.get_mock = (id, modFactory, resolveMod) => {
+            __webpack_require__.get_mock = (id) => {
               let currentMock = __webpack_require__.mock_modules[id];
               if (currentMock) {
                 return currentMock;
               }
+            };
+            __webpack_require__.rstest_require = (...args) => {
+              let currentMock = __webpack_require__.mock_modules[args[0]];
+              if (currentMock) {
+                return currentMock();
+              }
+              return __webpack_require__(...args)
             };
           `
       }
@@ -121,8 +128,8 @@ export default defineConfig({
   },
   source: {
     entry: {
-      index: './src/index.js',
-      // indexCjs: './src/index-cjs.js',
+      // index: './src/index.js',
+      indexCjs: './src/index-cjs.js',
     },
   },
   output: {
@@ -140,7 +147,8 @@ export default defineConfig({
         if (
           request === 'lodash-es/capitalize.js' ||
           request === 'radashi' ||
-          request === 'pkg1'
+          request === 'pkg1' ||
+          request === 'pkg2'
         ) {
           if (contextInfo.issuer && dependencyType === 'commonjs') {
             return callback(undefined, 'commonjs ' + request)

@@ -13,17 +13,18 @@
 // )
 // #endregion
 
-__webpack_require__.rstest_register_module(
-  require.resolve('./minus.js'),
-  () => {
-    const __output = {
-      minus: (a) => a - 0.1,
-    }
-    return __output
+__webpack_require__.set_mock(require.resolve('./minus.js'), () => {
+  const __output = {
+    minus: (a) => a - 0.1,
   }
-)
+  return __output
+})
 
 // ==========================================================================================
+function unMock(id) {
+  delete __webpack_require__.mock_modules[id]
+  delete __webpack_require__.c[id]
+}
 
 // #region before loader:
 // rstest.mock(
@@ -36,7 +37,7 @@ __webpack_require__.rstest_register_module(
 // )
 // #endregion
 
-__webpack_require__.rstest_register_module('pkg1', () => {
+__webpack_require__.set_mock('pkg1', () => {
   const originalModule = require('radashi')
   const __output = originalModule.title
   return __output
@@ -44,16 +45,27 @@ __webpack_require__.rstest_register_module('pkg1', () => {
 
 // #endregion
 
+__webpack_require__.set_mock('pkg2', () => {
+  const originalModule = require('radashi')
+  const __output = originalModule.title
+  return __output
+})
+
 // CJS
 const { minus } = require('./minus.js')
 const title = require('pkg1')
 const titleWithSuffix = require('./use-external-cjs.js')
 
 console.log('🟢', minus(2))
+unMock(require.resolve('./minus.js'))
+const minusOriginal = require('./minus.js')
+console.log('🟢', minus(2))
+console.log('🟢', minusOriginal.minus(2))
+
 console.log('🟢', title('hello world.'))
 console.log('🟢', titleWithSuffix('hello world.'))
 
-// __dirname __filename
+// // __dirname __filename
 const { filename } = require('./use-dir')
-console.log('🟢', __dirname)
-console.log('🟢', filename)
+// console.log('🟢', __dirname)
+// console.log('🟢', filename)

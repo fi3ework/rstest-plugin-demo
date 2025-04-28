@@ -1,4 +1,4 @@
 // before loader:
-const title = require('pkg1')
+const title = require('pkg2')
 
 module.exports = (...args) => title(...args) + ' --- use-external'
