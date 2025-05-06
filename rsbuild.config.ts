@@ -105,8 +105,8 @@ export default defineConfig({
   },
   source: {
     entry: {
-      // index: './src/index.js',
-      indexCjs: './src/index-cjs.js',
+      index: './src/index.js',
+      // indexCjs: './src/index-cjs.js',
     },
   },
   output: {

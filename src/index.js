@@ -106,6 +106,22 @@ __webpack_require__.set_mock(
 const repeat = await import('lodash-es/repeat.js')
 console.log('🟢', repeat('abc'))
 
+const __rstest_resolved_non_exist = (() => {
+  try {
+    return require.resolve('non_exist')
+  } catch (e) {
+    return 'non_exist'
+  }
+})()
+
+__webpack_require__.set_mock(__rstest_resolved_non_exist, async () => {
+  return 'non_exist'
+})
+
+const nonExist = await import(__rstest_resolved_non_exist)
+
+console.log('🟢', nonExist)
+
 function unMock(id) {
   delete __webpack_require__.mock_modules[id]
   delete __webpack_require__.c[id]
